@@ -1,29 +1,29 @@
 # Reproduction Notes
 
-## Restoring Data
+## Data Restoration
 
-Download all six data archives, including every `*.zip.part-*` piece and `shared_provenance.zip`, and run `scripts/restore_data.py` from this repository. Large archives are divided only for transfer. The restore tool joins their parts, checks the complete archive hash against `provenance/DATA_PACKAGES.json`, checks each member against its SHA-256 inventory and refuses to overwrite a different existing file. It ignores archive metadata under `_release/`.
+Download the six logical archives from the data directory, including `shared_provenance.zip` and all multipart pieces. Run `scripts/restore_data.py` from the repository. The tool verifies the joined ZIP against `provenance/DATA_PACKAGES.json`, verifies every restored member against its SHA-256 inventory and refuses to overwrite a different existing file.
 
-The scientific scripts retain their original paths. The restore tool creates the internal alias `04_数值实验/overleaf` to `05_论文草稿/latex` for historical plotting scripts. The alias points within the repository, not to an author-specific external directory.
+The download packages preserve their original scientific paths under `04_数值实验/` and `05_论文草稿/`. The public source has been reorganized under `analysis/`. Code paths have been adjusted to read those unchanged inputs. Original data filenames and archived execution manifests have not been rewritten. These local data directories are ignored by Git.
 
-## Numerical Components
+The restoration command creates the internal figure alias `04_数值实验/overleaf` pointing to `05_论文草稿/latex`. Pinned R adapters in `analysis/adapters/` are copied into the historical launch locations under the restored results directory. These are independent working copies, so generating a new adapter cannot overwrite its pinned source.
 
-The following source files are preserved byte-for-byte because result caches identify their exact hashes:
+## Numerical Identity
 
-- `distrisvg_revision_2026_09_18/nb_core.py`
-- `distrisvg_completion_2026_09_25/joint_refit.py`
-- `distrisvg_completion_2026_09_25/weighted_information.py`
+The following numerical cores are preserved byte-for-byte because cached fits validate their exact hashes:
 
-Other publication-copy Python files differ only in ordinary comments or shortened module help text. Their executable ASTs are checked against the original sources. Function docstrings, pragmas, licenses and attribution are retained. R adapters and third-party/pinned R files remain unchanged.
+- `analysis/code/estimation/nb_core.py`
+- `analysis/code/inference/joint_refit.py`
+- `analysis/code/inference/weighted_information.py`
 
-The archived manifests keep their original source hashes. They have not been rewritten to misrepresent historical execution. The source manifest provides the original-to-publication mapping.
+The directory cleanup only adjusts source locations and path wiring in callers. Other earlier publication-copy changes reduced ordinary comments or module help text. Function documentation, licenses and attribution are retained. R sources are byte-identical. The source inventory records both original and current source hashes. Archived result manifests retain their historical identities.
 
-## Running Analyses
+## Running and Checking
 
-The code records original output locations. Running an analysis or plotting command can overwrite a restored result or figure. Make a separate work copy before rerunning result-writing entrypoints. Unit tests do not run the complete retained experiments.
+See `ANALYSES.md` for the analysis entrypoints. Running a fit or plotting command can overwrite a restored result or figure. Use a separate working copy for such runs. Unit tests check focused numerical and file-restoration behavior. They do not rerun every manuscript experiment.
 
-The main calibration entrypoint is `distrisvg_completion_2026_09_25/run_completion.py`. Its `archive`, `calibration` and `real` subcommands fit different targets. Expensive analyses use checkpoints; input or numerical-core mismatches cause an explicit failure rather than silent reuse.
+Expensive analyses use checkpoints. Input-array, configuration or numerical-core mismatches produce explicit failures instead of silently reusing incompatible fits.
 
-For official R methods, clone the recorded upstream sources at the commits listed in `provenance/UPSTREAM_SOURCES.csv`. The original launch scripts expect the corresponding isolated R environment and source directories under `08_其他/运行环境/distrisvg_2026_09_25/`. That environment is not vendored in this repository. Follow the original analysis READMEs and environment records rather than assuming a system R installation is equivalent.
+Official R methods require the upstream revisions recorded in `provenance/UPSTREAM_SOURCES.csv`. The launch scripts expect an isolated R environment and source directories under `08_其他/运行环境/distrisvg_2026_09_25/`. That runtime is not bundled. The environment and R session records describe the original setup.
 
-The earlier integer-field reference export and initialization-only RDS files are excluded from the public data packages. Valid reference-dependent results use the real-valued `reference_counts_rsem.mtx`. The original manifest also lists excluded debug files for historical provenance; this is not a missing scientific input.
+The earlier integer-field reference export and initialization-only RDS files are excluded from the public data. Reference-dependent results use the real-valued `reference_counts_rsem.mtx`. Historical manifests can still mention excluded debugging files. Those entries do not identify missing scientific inputs.

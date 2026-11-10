@@ -76,4 +76,43 @@ class RestoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):restore.restore(path)
         self.assertFalse((outside/'value.csv').exists())
 
+    def adapter_source(self):
+        source=self.root/'analysis/adapters/competitors/run_method.R'
+        source.parent.mkdir(parents=True)
+        source.write_text('x <- 1\n')
+        return source
+
+    def test_compatibility_is_idempotent_and_copies_adapters(self):
+        source=self.adapter_source()
+        restore.setup_compatibility()
+        restore.setup_compatibility()
+        alias=self.root/'04_数值实验/overleaf'
+        self.assertEqual(alias.resolve(),(self.root/'05_论文草稿/latex').resolve())
+        target=self.root/'04_数值实验/results/distrisvg_completion_2026-09-25/official_competitors/adapters/run_method.R'
+        self.assertFalse(target.is_symlink())
+        self.assertEqual(target.read_bytes(),source.read_bytes())
+        target.write_text('x <- 2\n')
+        self.assertEqual(source.read_text(),'x <- 1\n')
+        with self.assertRaises(FileExistsError):restore.setup_compatibility()
+
+    def test_wrong_figure_alias_rejected(self):
+        parent=self.root/'04_数值实验';parent.mkdir()
+        outside=self.base/'outside';outside.mkdir()
+        (parent/'overleaf').symlink_to(outside,target_is_directory=True)
+        with self.assertRaises(ValueError):restore.setup_compatibility()
+
+    def test_adapter_symlink_escape_rejected(self):
+        self.adapter_source()
+        outside=self.base/'outside';outside.mkdir()
+        parent=self.root/'04_数值实验/results';parent.parent.mkdir(parents=True)
+        parent.symlink_to(outside,target_is_directory=True)
+        with self.assertRaises(ValueError):restore.setup_compatibility()
+        self.assertEqual(list(outside.iterdir()),[])
+
+    def test_figure_target_symlink_escape_rejected(self):
+        outside=self.base/'outside';outside.mkdir()
+        (self.root/'05_论文草稿').symlink_to(outside,target_is_directory=True)
+        with self.assertRaises(ValueError):restore.setup_compatibility()
+        self.assertEqual(list(outside.iterdir()),[])
+
 if __name__=='__main__':unittest.main(verbosity=2)

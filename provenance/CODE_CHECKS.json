@@ -1,16 +1,16 @@
 {
-  "source_files": 83,
-  "python_files": 70,
+  "source_files": 68,
+  "python_files": 55,
   "r_files": 13,
-  "comments_removed": 2536,
-  "module_help_shortened": 3,
-  "python_executable_ast_unchanged": true,
+  "directory_cleanup_only": true,
+  "source_wiring_checked_against_previous_release": true,
   "protected_numeric_cores": [
-    "distrisvg_completion_2026_09_25/joint_refit.py",
-    "distrisvg_completion_2026_09_25/weighted_information.py",
-    "distrisvg_revision_2026_09_18/nb_core.py"
+    "analysis/code/estimation/nb_core.py",
+    "analysis/code/inference/joint_refit.py",
+    "analysis/code/inference/weighted_information.py"
   ],
-  "r_sources_unchanged": true,
+  "pinned_r_sources_byte_identical": true,
   "high_confidence_credential_findings": [],
-  "claim_boundary": "No numerical rerun or new scientific validation. Core hashes and third-party/pinned R sources remain unchanged."
+  "removed_source_files": 15,
+  "claim_boundary": "File organization and path compatibility checks; no new statistical experiment."
 }

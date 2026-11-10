@@ -4,50 +4,48 @@ Research code for distributed sparse estimation and inference of shared cell-typ
 
 ## Data
 
-Data are organized into Simulation, PDAC and Mouse brain cases in the [data directory](https://drive.google.com/drive/folders/11DNp5epBPN97qs5Yerl3f8h0AiVf1yDr). Download each case archive and `shared_provenance.zip`. To restore the original paths, run:
+Scientific data are distributed separately in the [Simulation, PDAC and Mouse brain data folders](https://drive.google.com/drive/folders/11DNp5epBPN97qs5Yerl3f8h0AiVf1yDr). This repository contains code, environment records and data checksums, not raw expression matrices or collaborator-transfer packages.
+
+Download the case archives and `shared_provenance.zip`, keeping all `*.zip.part-*` pieces together, then run:
 
 ```sh
 python scripts/restore_data.py /absolute/path/to/downloaded/data
 ```
 
-Files larger than the upload limit are supplied as `*.zip.part-001`, `*.zip.part-002`, and so on. Keep all parts together. The restore command automatically joins them and verifies each complete ZIP before extracting scientific data. `provenance/UPLOAD_PARTS.csv` lists the distributed pieces.
-
-The shared archive contains the original cross-dataset summary tables and run identities. Filtered case-specific views are included for convenient inspection; they do not replace the original tables. Per-file SHA-256 inventories accompany all archives.
+The restore tool joins multipart archives, checks SHA-256 values and restores their frozen input paths. It also installs local compatibility copies of the pinned R adapters. Restored data and generated results are excluded from version control. `provenance/UPLOAD_PARTS.csv` lists the download pieces.
 
 ## Code Organization
 
-The original relative paths are retained to avoid changing analysis inputs or import behavior.
-
-| Directory under `04_数值实验/code/` | Role |
+| Directory | Purpose |
 | --- | --- |
-| `distrisvg_revision_2026_09_18/` | Canonical negative-binomial model, AP-FedAdam and FedAvg, sequencing-depth sensitivity and evaluation metrics |
-| `distrisvg_completion_2026_09_25/` | All-variable joint refit, nuisance-adjusted covariance, calibration and full-panel real-data analyses |
-| `workflow_pooled_2026_10_26/` | Matched pooled inference replay on the same complete-input calibration data |
-| `figure_scripts/` | Figure generation, reference deconvolution, official-method adapters and retained historical analyses |
-| `new_test1-5/`, `missing_celltype_test/` | Retained large-scale simulation generators and fitting scripts |
-| `pdac_data_to_yc/` | Archived PDAC fitting and postprocessing |
+| `analysis/code/estimation/` | Negative-binomial model, AP-FedAdam and FedAvg, depth sensitivity and evaluation |
+| `analysis/code/inference/` | All-variable refit, nuisance-adjusted covariance, calibration and real-data analyses |
+| `analysis/code/pooled_comparison/` | Matched pooled inference on the complete-input calibration data |
+| `analysis/code/simulation_complete/` | Large-scale simulation generator and complete-panel fitting |
+| `analysis/code/simulation_missing/` | Large-scale incomplete-panel fitting |
+| `analysis/code/pdac/` | Archived PDAC fitting across the five basis families |
+| `analysis/code/figures/` | Figures, reference deconvolution and additional benchmark entrypoints |
+| `analysis/adapters/` | Pinned R adapters used for official-method comparisons |
 
-The numerical optimizer, inferential refit and descriptive spatial maps are separate analyses. A plot regenerated from saved CSVs is not a refitted model. Scripts retained for historical comparisons are identified in `docs/FIGURE_MAP.md`.
+See [the manuscript display map](docs/FIGURE_MAP.md) for figure and table sources, [analysis instructions](docs/ANALYSES.md) for entrypoints, and [reproduction notes](docs/REPRODUCIBILITY.md) for input and environment requirements. All five spatial basis families are retained.
 
-## Environment and Checks
+## Environment and Tests
 
-The recorded Python package versions are in `environment/requirements-frozen.txt`. The explicit R environment is specific to macOS Apple Silicon. R session information and pinned upstream repository revisions are included separately. These records describe the environment used for the retained results, not a verified universal installer.
+Python package versions are recorded in `environment/requirements-frozen.txt`. The explicit R environment targets macOS Apple Silicon. R session records and upstream revisions are included separately. These describe the retained results' environment, not a universal installer.
 
 ```sh
-python -m unittest discover -s 04_数值实验/code/distrisvg_revision_2026_09_18 -p 'test_*.py' -v
-python -m unittest discover -s 04_数值实验/code/distrisvg_completion_2026_09_25 -p 'test_*.py' -v
-python 04_数值实验/code/workflow_pooled_2026_10_26/test_pooled.py
-python tests/test_restore_data.py
+python -m unittest discover -s analysis/code/estimation -p 'test_*.py' -v
+python -m unittest discover -s analysis/code/inference -p 'test_*.py' -v
+python analysis/code/pooled_comparison/test_pooled.py
+python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-The pooled tests require the restored simulation source data. See `docs/REPRODUCIBILITY.md` before running result-writing or computationally expensive scripts.
+The pooled tests require restored simulation data. Result-writing scripts can overwrite local results, so rerun them in a separate working copy.
 
-## Provenance
+## Provenance and Scope
 
-`provenance/SOURCE_MANIFEST.csv` links original and publication-copy source hashes. Ordinary explanatory comments have been reduced without changing executable Python syntax. The numerical cores used to validate cached results and the pinned R sources remain byte-identical. Licenses, attribution, relevant function documentation and necessary numerical explanations are retained.
+`provenance/SOURCE_MANIFEST.csv` records the canonical source paths and source hashes. The optimizer, joint refit and weighted-information numerical cores are byte-identical to the archived versions. Pinned R adapters and upstream attribution are preserved. The public directory cleanup changes file organization and input-path wiring, not the statistical calculations or released data.
 
-Upstream software is not relicensed or bundled as newly authored code. See `provenance/UPSTREAM_SOURCES.csv`. An author-approved reuse license for this repository has not been selected; public access alone does not grant a software license.
+Upstream revisions are listed in `provenance/UPSTREAM_SOURCES.csv`. An author-approved software reuse license has not been selected. Public access alone does not grant a software license.
 
-## Interpretation
-
-The implementation emulates distributed likelihood calculations locally. It is not a transport-security or privacy implementation. Complete-input inferential calibration does not establish universal false-discovery control. Real-data rankings and composition-adjusted expression maps do not establish cell-type ground truth. Mouse sections are unregistered and the reference is from visual cortex, not a matched whole-brain atlas.
+The implementation evaluates distributed likelihood calculations locally. It does not implement secure transport. Optimization, independent statistical inference and descriptive spatial maps are distinct components. Real-data rankings and composition-adjusted expression maps are not cell-type ground truth. Mouse sections are unregistered and the single-cell reference is from visual cortex rather than a matched whole-brain atlas.

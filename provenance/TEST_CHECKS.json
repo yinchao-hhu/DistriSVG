@@ -2,45 +2,62 @@
   "python_test_suites": [
     {
       "command": [
+        "python",
         "-m",
         "unittest",
         "discover",
         "-s",
-        "04_\u6570\u503c\u5b9e\u9a8c/code/distrisvg_revision_2026_09_18",
+        "analysis/code/estimation",
         "-p",
         "test_*.py",
         "-v"
       ],
       "exit_code": 0,
-      "log": "tests-1.log"
+      "tests": 8
     },
     {
       "command": [
+        "python",
         "-m",
         "unittest",
         "discover",
         "-s",
-        "04_\u6570\u503c\u5b9e\u9a8c/code/distrisvg_completion_2026_09_25",
+        "analysis/code/inference",
         "-p",
         "test_*.py",
         "-v"
       ],
       "exit_code": 0,
-      "log": "tests-2.log"
+      "tests": 10
     },
     {
       "command": [
-        "04_\u6570\u503c\u5b9e\u9a8c/code/workflow_pooled_2026_10_26/test_pooled.py"
+        "python",
+        "analysis/code/pooled_comparison/test_pooled.py"
       ],
       "exit_code": 0,
-      "log": "tests-3.log"
+      "tests": 3
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "tests": 14
     }
   ],
+  "python_tests_passed": 35,
   "r_parse_files": 13,
   "r_parse_exit_code": 0,
   "work_copy_only": true,
   "original_data_unchanged": true,
-  "claim_boundary": "Focused tests and source equivalence, not a rerun of all manuscript experiments.",
-  "python_tests_passed": 21,
-  "data_restore_tests_passed": 6
+  "claim_boundary": "Focused numerical and path/restore tests, not a full experiment rerun."
 }

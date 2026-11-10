@@ -65,6 +65,36 @@ def restore(path):
             with z.open(row['path']) as src,destination.open('xb') as out:shutil.copyfileobj(src,out)
         print(f'{path.name}: {len(rows)} verified files')
 
+def setup_compatibility():
+    alias=ROOT/'04_数值实验/overleaf'
+    target=ROOT/'05_论文草稿/latex'
+    if not target.resolve().is_relative_to(ROOT.resolve()) or not alias.parent.resolve().is_relative_to(ROOT.resolve()):
+        raise ValueError('Unsafe figure compatibility path')
+    target.mkdir(parents=True,exist_ok=True)
+    alias.parent.mkdir(parents=True,exist_ok=True)
+    if alias.is_symlink():
+        if alias.resolve()!=target.resolve():raise ValueError('Unexpected figure alias target')
+    elif not alias.exists():
+        alias.symlink_to('../05_论文草稿/latex',target_is_directory=True)
+    elif not alias.is_dir():
+        raise FileExistsError(alias)
+    base=Path('04_数值实验/results/distrisvg_completion_2026-09-25')
+    adapters={
+        base/'official_competitors/adapters':Path('analysis/adapters/competitors'),
+        base/'official_competitors/spvc_seeded_audit':Path('analysis/adapters/seeded_spvc'),
+        base/'official_mouse/adapters':Path('analysis/adapters/mouse'),
+    }
+    for destination,source in adapters.items():
+        for path in sorted((ROOT/source).glob('*.R')):
+            output=ROOT/destination/path.name
+            if not output.resolve().is_relative_to(ROOT.resolve()) or output.is_symlink():
+                raise ValueError('Unsafe adapter destination')
+            if output.exists():
+                if output.read_bytes()!=path.read_bytes():raise FileExistsError(output)
+                continue
+            output.parent.mkdir(parents=True,exist_ok=True)
+            with path.open('rb') as src,output.open('xb') as out:shutil.copyfileobj(src,out)
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('download_directory',type=Path);args=p.parse_args()
     join_parts(args.download_directory)
@@ -73,8 +103,7 @@ def main():
     expected={'shared_provenance.zip','simulation.zip','pdac.zip','mouse_inputs.zip','mouse_results.zip','mouse_fitted_models.zip'}
     for archive in archives:
         if archive.name in expected:restore(archive)
-    alias=ROOT/'04_数值实验/overleaf'
-    if not alias.exists() and not alias.is_symlink():alias.symlink_to('../05_论文草稿/latex',target_is_directory=True)
+    setup_compatibility()
     missing=expected-{p.name for p in archives}
     if missing:print('Not supplied: '+', '.join(sorted(missing)))
 
