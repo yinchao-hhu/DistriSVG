@@ -1,0 +1,204 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages(library(CTSV))
+
+args <- commandArgs(trailingOnly = TRUE)
+source_dir <- if (length(args) >= 1) args[[1]] else file.path(
+  "05_论文草稿", "latex", "figs", "simulation_method_comparison", "source_data"
+)
+scenarios <- if (length(args) >= 2) strsplit(args[[2]], ",")[[1]] else c("complete", "missing")
+
+scenario_dirs <- c(
+  complete = file.path("04_数值实验", "code", "new_test1-5", "sim_data"),
+  missing = file.path("04_数值实验", "code", "missing_celltype_test", "sim_data")
+)
+data_mode <- "linear"
+
+acat <- function(p_values) {
+  p_values <- pmin(pmax(as.numeric(p_values), 1e-15), 1 - 1e-15)
+  statistic <- mean(tan((0.5 - p_values) * pi))
+  pmin(pmax(0.5 - atan(statistic) / pi, 1e-15), 1)
+}
+
+score_summary <- function(frame) {
+  active <- as.logical(frame$active)
+  score <- -log10(pmax(frame$pair_p, 1e-300))
+  selected <- frame$pair_bh_q < 0.05
+  positives <- sum(active)
+  negatives <- sum(!active)
+  ordering <- order(score, decreasing = TRUE)
+  ranked_active <- active[ordering]
+  tp <- cumsum(ranked_active)
+  fp <- cumsum(!ranked_active)
+  tpr <- tp / positives
+  fpr <- fp / negatives
+  auroc <- sum(diff(c(0, fpr, 1)) * (head(c(0, tpr, 1), -1) + tail(c(0, tpr, 1), -1)) / 2)
+  precision <- tp / seq_along(tp)
+  auprc <- sum(precision[ranked_active]) / positives
+  true_positive <- sum(selected & active)
+  false_positive <- sum(selected & !active)
+  data.frame(
+    auroc = auroc,
+    auprc = auprc,
+    selected_pairs = sum(selected),
+    selected_genes = length(unique(frame$gene_id[selected])),
+    true_positives = true_positive,
+    false_positives = false_positive,
+    false_negatives = sum(!selected & active),
+    empirical_fdr = false_positive / max(true_positive + false_positive, 1)
+  )
+}
+
+panel <- read.csv(file.path(source_dir, "official_g1000_gene_panel.csv"), check.names = FALSE)
+all_summaries <- list()
+
+for (scenario in scenarios) {
+  data_dir <- scenario_dirs[[scenario]]
+  prefix <- paste0("g1000_", scenario, "_", data_mode)
+  count_path <- file.path(
+    data_dir,
+    "AllClients_Y_8_G_1000_L1_2e-07_Round1000_h_linear.csv"
+  )
+  input_path <- file.path(
+    data_dir,
+    "Input_Omega_S_8_G_1000_L1_2e-07_Round1000_h_linear.csv"
+  )
+  truth_path <- file.path(data_dir, "GlobalTrue_Beta_G1000_K5_L1_2e-07_h_linear.csv")
+
+  count_frame <- read.csv(count_path, check.names = FALSE)
+  input_frame <- read.csv(input_path, check.names = FALSE)
+  truth_frame <- read.csv(truth_path, check.names = FALSE)
+  stopifnot(identical(count_frame$Client_ID, input_frame$Client_ID))
+  stopifnot(identical(count_frame$Spot_ID, input_frame$Spot_ID))
+
+  full_gene_columns <- grep("^Gene_", names(count_frame), value = TRUE)
+  Y <- as.matrix(count_frame[, full_gene_columns, drop = FALSE])
+  storage.mode(Y) <- "integer"
+  coordinates <- as.matrix(input_frame[, c("Coord_X", "Coord_Y")])
+  omega <- as.matrix(input_frame[, grep("^Omega_Cell_", names(input_frame)), drop = FALSE])
+  omega <- omega / rowSums(omega)
+  gene_ids <- panel$gene_id
+  selected_gene_indices <- match(gene_ids, colnames(Y))
+  stopifnot(!anyNA(selected_gene_indices))
+
+  standardized_coordinates <- t(coordinates) - colMeans(coordinates)
+  standardized_coordinates <- t(
+    standardized_coordinates / apply(standardized_coordinates, 1, sd)
+  )
+  quantiles <- c(0.4, 0.6)
+  psi1 <- quantile(abs(standardized_coordinates[, 1]), quantiles)
+  psi2 <- quantile(abs(standardized_coordinates[, 2]), quantiles)
+  patterns <- c("linear", "gau1", "gau2", "cos1", "cos2")
+  p_value_array <- array(
+    NA_real_,
+    dim = c(length(gene_ids), 2 * ncol(omega), length(patterns)),
+    dimnames = list(gene_ids, NULL, patterns)
+  )
+
+  started <- proc.time()[["elapsed"]]
+  for (pattern_index in seq_along(patterns)) {
+    fit_pattern <- patterns[[pattern_index]]
+    cache_path <- file.path(source_dir, sprintf("%s_ctsv_%s_axis_pval.csv", prefix, fit_pattern))
+    if (file.exists(cache_path)) {
+      cached <- read.csv(cache_path, check.names = FALSE)
+      matrix_result <- as.matrix(cached[, -1, drop = FALSE])
+      rownames(matrix_result) <- cached$gene_id
+    } else {
+      if (fit_pattern == "gau1") {
+        h1 <- exp(-standardized_coordinates[, 1]^2 / (2 * psi1[[1]]^2))
+        h2 <- exp(-standardized_coordinates[, 2]^2 / (2 * psi2[[1]]^2))
+      } else if (fit_pattern == "gau2") {
+        h1 <- exp(-standardized_coordinates[, 1]^2 / (2 * psi1[[2]]^2))
+        h2 <- exp(-standardized_coordinates[, 2]^2 / (2 * psi2[[2]]^2))
+      } else if (fit_pattern == "cos1") {
+        h1 <- cos(2 * pi * standardized_coordinates[, 1] / psi1[[1]])
+        h2 <- cos(2 * pi * standardized_coordinates[, 2] / psi2[[1]])
+      } else if (fit_pattern == "cos2") {
+        h1 <- cos(2 * pi * standardized_coordinates[, 1] / psi1[[2]])
+        h2 <- cos(2 * pi * standardized_coordinates[, 2] / psi2[[2]])
+      } else {
+        h1 <- standardized_coordinates[, 1]
+        h2 <- standardized_coordinates[, 2]
+      }
+      design <- cbind(omega * h1, omega * h2, omega)
+      matrix_result <- do.call(
+        rbind,
+        parallel::mclapply(
+          selected_gene_indices,
+          CTSV:::.P_gene,
+          Y = Y,
+          Tmp = design,
+          h1 = h1,
+          h2 = h2,
+          mc.cores = 2,
+          mc.preschedule = TRUE
+        )
+      )
+      rownames(matrix_result) <- gene_ids
+      write.csv(
+        data.frame(gene_id = gene_ids, matrix_result, check.names = FALSE),
+        cache_path,
+        row.names = FALSE
+      )
+    }
+    p_value_array[, , pattern_index] <- matrix_result[gene_ids, , drop = FALSE]
+    message(prefix, ": completed CTSV pattern ", fit_pattern)
+  }
+  p_value_array[is.na(p_value_array) | p_value_array < 0] <- 1
+  stable_pattern_p <- pmin(pmax(p_value_array, 1e-15), 1 - 1e-15)
+  axis_p <- 0.5 - atan(apply(tan((0.5 - stable_pattern_p) * pi), c(1, 2), mean)) / pi
+  rownames(axis_p) <- gene_ids
+  elapsed <- proc.time()[["elapsed"]] - started
+
+  cell_types <- paste0("CT", seq_len(ncol(omega)) - 1)
+  pair_rows <- list()
+  row_index <- 1
+  for (cell_index in seq_along(cell_types)) {
+    pair_p <- apply(
+      cbind(axis_p[, cell_index], axis_p[, length(cell_types) + cell_index]),
+      1,
+      acat
+    )
+    for (gene_index in seq_along(gene_ids)) {
+      numeric_gene <- panel$Gene_ID[[gene_index]]
+      truth_rows <- truth_frame[
+        truth_frame$Gene_ID == numeric_gene & truth_frame$Cell_Type == (cell_index - 1),
+        ,
+        drop = FALSE
+      ]
+      pair_rows[[row_index]] <- data.frame(
+        method = "CTSV (pooled)",
+        scenario = scenario,
+        data_mode = data_mode,
+        gene_id = gene_ids[[gene_index]],
+        cell_type = cell_types[[cell_index]],
+        active = as.integer(any(abs(truth_rows$True_Beta) > 1e-12)),
+        pair_p = pair_p[[gene_index]]
+      )
+      row_index <- row_index + 1
+    }
+  }
+  pairs <- do.call(rbind, pair_rows)
+  pairs$pair_bh_q <- p.adjust(pairs$pair_p, method = "BH")
+  write.csv(pairs, file.path(source_dir, paste0(prefix, "_ctsv_pairs.csv")), row.names = FALSE)
+  summary <- score_summary(pairs)
+  summary$method <- "CTSV (pooled)"
+  summary$scenario <- scenario
+  summary$data_mode <- data_mode
+  summary$panel_genes <- length(gene_ids)
+  summary$tested_pairs <- nrow(pairs)
+  summary$active_pairs <- sum(pairs$active)
+  summary$elapsed_seconds <- elapsed
+  all_summaries[[length(all_summaries) + 1]] <- summary
+  message(prefix, ": AUROC=", sprintf("%.4f", summary$auroc),
+          ", AUPRC=", sprintf("%.4f", summary$auprc),
+          ", selected=", summary$selected_pairs,
+          ", TP=", summary$true_positives,
+          ", FP=", summary$false_positives)
+}
+
+write.csv(
+  do.call(rbind, all_summaries),
+  file.path(source_dir, "g1000_official_ctsv_panel_summary.csv"),
+  row.names = FALSE
+)

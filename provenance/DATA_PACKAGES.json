@@ -1,0 +1,50 @@
+[
+  {
+    "group": "00_Shared",
+    "archive": "data/00_Shared/shared_provenance.zip",
+    "files": 24,
+    "uncompressed_bytes": 195550441,
+    "zip_bytes": 34075139,
+    "sha256": "d5130ab1b1fe52001c8e4acb32cebda645d06c7cca09b2295b6843bb94980673"
+  },
+  {
+    "group": "01_Simulation",
+    "archive": "data/01_Simulation/simulation.zip",
+    "files": 10500,
+    "uncompressed_bytes": 320496849,
+    "zip_bytes": 99388241,
+    "sha256": "c29b590ee1cdc3ad34563a040ec1001980d7aff7d6a87aa72936fd1695bc2909"
+  },
+  {
+    "group": "02_PDAC",
+    "archive": "data/02_PDAC/pdac.zip",
+    "files": 3695,
+    "uncompressed_bytes": 478801101,
+    "zip_bytes": 152386796,
+    "sha256": "4068945be160774892e75dcf2030e2c4e6ea3e0a391a0db6fc995ea7601eec51"
+  },
+  {
+    "group": "03_Mouse_brain/inputs",
+    "archive": "data/03_Mouse_brain/inputs/mouse_inputs.zip",
+    "files": 40,
+    "uncompressed_bytes": 940501158,
+    "zip_bytes": 353501105,
+    "sha256": "33a52d14c629c5a9022153a44a78d994544ccd9178e958446dcc4b2a52408ac5"
+  },
+  {
+    "group": "03_Mouse_brain/results",
+    "archive": "data/03_Mouse_brain/results/mouse_results.zip",
+    "files": 396,
+    "uncompressed_bytes": 40124042,
+    "zip_bytes": 21709027,
+    "sha256": "8b81248bfa6f193e184ede6e5b78e128cf0adb68f9b9b17fc24ae5f5f0625588"
+  },
+  {
+    "group": "03_Mouse_brain/models",
+    "archive": "data/03_Mouse_brain/models/mouse_fitted_models.zip",
+    "files": 12,
+    "uncompressed_bytes": 676155754,
+    "zip_bytes": 668766385,
+    "sha256": "9f1f2efebc4415851143f8d2998e08a58eaeb998dcdb4775a6b036cc0d02ef70"
+  }
+]

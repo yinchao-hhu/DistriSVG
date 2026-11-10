@@ -1,0 +1,45 @@
+{
+  "python_test_suites": [
+    {
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "04_\u6570\u503c\u5b9e\u9a8c/code/distrisvg_revision_2026_09_18",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "tests-1.log"
+    },
+    {
+      "command": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "04_\u6570\u503c\u5b9e\u9a8c/code/distrisvg_completion_2026_09_25",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "tests-2.log"
+    },
+    {
+      "command": [
+        "04_\u6570\u503c\u5b9e\u9a8c/code/workflow_pooled_2026_10_26/test_pooled.py"
+      ],
+      "exit_code": 0,
+      "log": "tests-3.log"
+    }
+  ],
+  "r_parse_files": 13,
+  "r_parse_exit_code": 0,
+  "work_copy_only": true,
+  "original_data_unchanged": true,
+  "claim_boundary": "Focused tests and source equivalence, not a rerun of all manuscript experiments.",
+  "python_tests_passed": 21
+}
