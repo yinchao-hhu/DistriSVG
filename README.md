@@ -10,6 +10,8 @@ Data are organized into Simulation, PDAC and Mouse brain cases in the [data dire
 python scripts/restore_data.py /absolute/path/to/downloaded/data
 ```
 
+Files larger than the upload limit are supplied as `*.zip.part-001`, `*.zip.part-002`, and so on. Keep all parts together. The restore command automatically joins them and verifies each complete ZIP before extracting scientific data. `provenance/UPLOAD_PARTS.csv` lists the distributed pieces.
+
 The shared archive contains the original cross-dataset summary tables and run identities. Filtered case-specific views are included for convenient inspection; they do not replace the original tables. Per-file SHA-256 inventories accompany all archives.
 
 ## Code Organization
@@ -35,6 +37,7 @@ The recorded Python package versions are in `environment/requirements-frozen.txt
 python -m unittest discover -s 04_数值实验/code/distrisvg_revision_2026_09_18 -p 'test_*.py' -v
 python -m unittest discover -s 04_数值实验/code/distrisvg_completion_2026_09_25 -p 'test_*.py' -v
 python 04_数值实验/code/workflow_pooled_2026_10_26/test_pooled.py
+python tests/test_restore_data.py
 ```
 
 The pooled tests require the restored simulation source data. See `docs/REPRODUCIBILITY.md` before running result-writing or computationally expensive scripts.

@@ -41,5 +41,6 @@
   "work_copy_only": true,
   "original_data_unchanged": true,
   "claim_boundary": "Focused tests and source equivalence, not a rerun of all manuscript experiments.",
-  "python_tests_passed": 21
+  "python_tests_passed": 21,
+  "data_restore_tests_passed": 6
 }

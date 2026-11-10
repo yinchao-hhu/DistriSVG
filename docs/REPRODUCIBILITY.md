@@ -2,7 +2,7 @@
 
 ## Restoring Data
 
-Download all six data archives, including `shared_provenance.zip`, and run `scripts/restore_data.py` from this repository. The restore tool checks each member against its SHA-256 inventory and refuses to overwrite a different existing file. It ignores archive metadata under `_release/`.
+Download all six data archives, including every `*.zip.part-*` piece and `shared_provenance.zip`, and run `scripts/restore_data.py` from this repository. Large archives are divided only for transfer. The restore tool joins their parts, checks the complete archive hash against `provenance/DATA_PACKAGES.json`, checks each member against its SHA-256 inventory and refuses to overwrite a different existing file. It ignores archive metadata under `_release/`.
 
 The scientific scripts retain their original paths. The restore tool creates the internal alias `04_数值实验/overleaf` to `05_论文草稿/latex` for historical plotting scripts. The alias points within the repository, not to an author-specific external directory.
 
